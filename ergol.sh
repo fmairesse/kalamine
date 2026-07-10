@@ -1,0 +1,1 @@
+python -m kalamine.cli watch ~/workspace/fabien.mairesse/keeb/klayouts/keymaps/ergol.toml -p 1664

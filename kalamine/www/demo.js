@@ -38,7 +38,9 @@ window.addEventListener('DOMContentLoaded', () => {
     } else if (event.code === 'Enter') { // clear text input on <Enter>
       event.target.value = '';
     } else if ((event.code === 'Tab') || (event.code === 'Escape')) {
-      setTimeout(close, 100);
+      setTimeout(() => {
+        input.value = '';
+      }, 100);
     } else {
       return true; // don't intercept special keys or key shortcuts
     }

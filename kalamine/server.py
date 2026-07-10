@@ -12,11 +12,11 @@ from .generators import ahk, keylayout, klc, web, xkb
 from .layout import KeyboardLayout, load_layout
 
 
-def keyboard_server(file_path: Path, angle_mod: bool = False) -> None:
+def keyboard_server(file_path: Path, angle_mod: bool = False, webserver_port = 1664) -> None:
     kb_layout = KeyboardLayout(load_layout(file_path), angle_mod)
 
     host_name = "localhost"
-    webserver_port = 1664
+    
     lr_server_port = 5500
 
     def main_page(layout: KeyboardLayout, angle_mod: bool = False) -> str:
@@ -82,6 +82,7 @@ def keyboard_server(file_path: Path, angle_mod: bool = False) -> None:
                             <option>en</option>
                             <option>en+fr</option>
                             <option>fr</option>
+                            <option selected="selected">fma</option>
                             <option value="fra_mixed-typical_2012_1M-sentences">fr (Leipzig)</option>
                         </select>
                         <label for="corpus">corpus</label>
@@ -175,6 +176,7 @@ def keyboard_server(file_path: Path, angle_mod: bool = False) -> None:
             # XXX always reloads the layout on the root page, never in sub pages
             nonlocal kb_layout
             nonlocal angle_mod
+            print(f'path={self.path}')
             if self.path == "/json":
                 send(web.pretty_json(kb_layout), content="application/json")
             elif self.path == "/keylayout":

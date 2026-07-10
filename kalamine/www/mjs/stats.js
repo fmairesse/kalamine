@@ -82,11 +82,8 @@ window.addEventListener('DOMContentLoaded', () => {
     showNGrams(report.ngrams);
   };
 
-  document
-    .getElementById('corpus')
-    .addEventListener('change', event => {
-      const corpusName = event.target.value;
-      const noCorpus = (corpusName === '-');
+  function onCorpusChange(corpusName) {
+      const noCorpus = (corpusName === '-') || !corpusName;
       document.getElementById('analyzer').hidden = noCorpus;
       if (noCorpus) {
         return;
@@ -97,5 +94,12 @@ window.addEventListener('DOMContentLoaded', () => {
           corpus = data;
           showReport();
         });
-    });
+  }
+
+  const $corpus = document.getElementById('corpus')
+  $corpus.addEventListener('change', event => {
+    const corpusName = event.target.value;
+    onCorpusChange(corpusName)
+  });
+  setTimeout(() => onCorpusChange($corpus.value), 300);
 });
