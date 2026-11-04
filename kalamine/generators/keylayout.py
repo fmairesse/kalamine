@@ -26,14 +26,22 @@ def macos_keymap(layout: "KeyboardLayout") -> List[List[str]]:
     """macOS layout, main part."""
 
     if layout.qwerty_shortcuts:
-        print("WARN: keeping qwerty shortcuts is not yet supported for MacOS")
+        print("WARN: keeping qwerty shortcuts is not yet supported for MacOs")
+
+    # Command layer overrides: key_name -> symbol
+    cmd_overrides = getattr(layout, "cmd_overrides", {})
 
     ret_str = []
-    for index in range(5):
-        layer = layout.layers[
-            [Layer.BASE, Layer.SHIFT, Layer.BASE, Layer.ALTGR, Layer.ALTGR_SHIFT][index]
-        ]
-        caps = index == 2
+    for index in range(6):
+        if index < 5:
+            layer = layout.layers[
+                [Layer.BASE, Layer.SHIFT, Layer.BASE, Layer.ALTGR, Layer.ALTGR_SHIFT][index]
+            ]
+            caps = index == 2
+        else:
+            # index 5: command layer (same as base layer, with optional overrides)
+            layer = layout.layers[Layer.BASE]
+            caps = False
 
         def has_dead_keys(letter: str) -> bool:
             if letter in "\u0020\u00a0\u202f":  # space
@@ -57,7 +65,11 @@ def macos_keymap(layout: "KeyboardLayout") -> List[List[str]]:
             symbol = "&#x0010;"
             final_key = True
 
-            if key_name in layer:
+            # Check for cmd override
+            if index == 5 and key_name in cmd_overrides:
+                symbol = _xml_proof(cmd_overrides[key_name])
+                final_key = True
+            elif key_name in layer:
                 key = layer[key_name]
                 if key in layout.dead_keys:
                     symbol = f"dead_{DK_INDEX[key].name}"

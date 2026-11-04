@@ -165,6 +165,7 @@ class KeyboardLayout:
                 k != "base"
                 and k != "full"
                 and k != "altgr"
+                and k != "cmd_overrides"
                 and not isinstance(layout_data[k], dict)
             ):
                 self.meta[k] = layout_data[k]
@@ -172,6 +173,9 @@ class KeyboardLayout:
             layout_data["name8"] if "name8" in layout_data else self.meta["name"][0:8]
         )
         self.meta["fileName"] = self.meta["name8"].lower()
+
+        # Command layer overrides for macOS (e.g., é → z for Cmd+Z)
+        self.cmd_overrides = layout_data.get("cmd_overrides", {})
 
         # keyboard layers: self.layers & self.dead_keys
         rows = copy.deepcopy(GEOMETRY[self.meta["geometry"]].rows)
