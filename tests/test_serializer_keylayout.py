@@ -1,7 +1,13 @@
 from textwrap import dedent
 
 from kalamine import KeyboardLayout
-from kalamine.generators.keylayout import macos_actions, macos_keymap, macos_terminators
+from kalamine.generators.keylayout import (
+    keylayout,
+    macos_actions,
+    macos_keymap,
+    macos_terminators,
+)
+from kalamine.utils import Layer
 
 from .util import get_layout_dict
 
@@ -1636,3 +1642,68 @@ def test_prog():
         <when state="diaeresis"  output="¨" />
         """
     )
+
+
+
+def layout_with_repeated_semicolon(
+    dead_key_output: str, altgr_symbol: str = ";", altgr_shift_symbol: str = "←"
+) -> KeyboardLayout:
+    data = get_layout_dict("intl")
+    base = data["base"]
+    data["base"] = base.replace("│ <   │", f"│ ; {dead_key_output} │")
+    data["altgr"] = base.replace("│ <   │", f"│ < {altgr_shift_symbol} │").replace(
+        "│ ,   │", f"│ , {altgr_symbol} │"
+    )
+    return KeyboardLayout(data)
+
+
+@pytest.mark.parametrize(
+    ("altgr_symbol", "altgr_shift_symbol", "keymap_index"),
+    [(";", "←", 3), ("←", ";", 4)],
+    ids=["altgr", "altgr-shift"],
+)
+def test_same_symbol_on_several_layers(
+    altgr_symbol: str, altgr_shift_symbol: str, keymap_index: int
+):
+    layout = layout_with_repeated_semicolon("•", altgr_symbol, altgr_shift_symbol)
+    assert layout.has_altgr and layout.has_1dk
+    assert layout.layers[Layer.BASE]["ab08"] == ","
+    assert layout.layers[Layer.SHIFT]["ab08"] == ";"
+    assert layout.layers[Layer.ALTGR]["ab08"] == altgr_symbol
+    assert layout.layers[Layer.ALTGR_SHIFT]["ab08"] == altgr_shift_symbol
+    assert layout.dead_keys["**"][";"] == "•"
+
+    actions = macos_actions(layout)
+    action_id = '<action id="ab08_;">'
+    assert actions.count(action_id) == 1
+    action_index = actions.index(action_id)
+    assert actions[action_index : action_index + 4] == split(
+        """
+        <action id="ab08_;">
+          <when state="none"       output=";" />
+          <when state="1dk"        output="•" />
+        </action>
+        """
+    )
+    action_ids = [line for line in actions if line.startswith("<action ")]
+    assert len(action_ids) == len(set(action_ids))
+
+    keymaps = macos_keymap(layout)
+    key = '<key code="43"  action="ab08_;" />'
+    assert key in keymaps[1]
+    assert key in keymaps[keymap_index]
+    assert keylayout(layout).count(action_id) == 1
+
+
+def test_same_symbol_without_dead_key_uses_direct_output():
+    layout = layout_with_repeated_semicolon(" ")
+    assert layout.layers[Layer.SHIFT]["ab08"] == ";"
+    assert layout.layers[Layer.ALTGR]["ab08"] == ";"
+    assert all(";" not in dead_key for dead_key in layout.dead_keys.values())
+    assert '<action id="ab08_;">' not in macos_actions(layout)
+    assert '<action id="ab08_;">' not in keylayout(layout)
+
+    keymaps = macos_keymap(layout)
+    key = '<key code="43"  output=";" />'
+    assert key in keymaps[1]
+    assert key in keymaps[3]
